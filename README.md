@@ -38,8 +38,16 @@ Extra: los registros de mantenimiento y sensores se conservan al recargar (`loca
 3. Completa el formulario y pulsa el botón principal de cada módulo. El botón **"Cargar datos de prueba"** rellena los campos con los valores de las pruebas.
 4. En las tablas, pulsa **Eliminar** para borrar un registro.
 
+## Requisitos técnicos mínimos
+ 
+- HTML semántico: `header`, `nav`, `main`, `section`, `footer`; formularios con `label` y mensajes de ayuda.
+- CSS propio: colores coherentes, tablas y botones con estilo, diseño adaptable a celular con media query.
+- JavaScript externo (`script.js`): más de 4 funciones propias, eventos con `addEventListener` y actualización del DOM sin recargar.
+- Arreglos: mantenimiento (objetos), sensores (objetos) y viento (números); altas, visualización y eliminación de registros.
+- Expresión regular real `/^SEN-\d{3}$/` y validaciones de rangos, vacíos y valores no numéricos, con mensajes claros.
+- Opcional: `localStorage` para conservar registros al recargar.
 ## Pruebas de aceptación
-
+ 
 | Módulo | Entrada | Resultado esperado |
 |---|---|---|
 | Detención | 72 km/h y 3 s | 60 m |
@@ -47,10 +55,3 @@ Extra: los registros de mantenimiento y sensores se conservan al recargar (`loca
 | Viento | 10, 20, 30, 40, 50 | promedio 30, máximo 50 |
 | Sensores | `SEN-001` / `SEN-1` / vacío | válido / error / error |
 | Navegación | menú y controles en pantalla pequeña | funcionan |
-
-## Publicación en GitHub Pages
-
-1. Sube los 4 archivos a un repositorio de GitHub.
-2. Ve a **Settings → Pages**.
-3. En *Branch* elige `main` y la carpeta `/ (root)`, y guarda.
-4. Copia la URL que GitHub te muestra.
