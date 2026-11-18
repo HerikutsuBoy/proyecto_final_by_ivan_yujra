@@ -216,17 +216,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const inicio = document.getElementById("inicio");
     const panel = document.getElementById("panel-principal");
 
-    const entrar = document.getElementById("btn-entrar");
+    // Buscar el botón específicamente dentro de la pantalla inicial
+    const entrar = document.querySelector("#inicio #btn-entrar");
+
     const regresar = document.getElementById("btn-inicio");
 
-    // Comprobar los elementos principales
-    if (!inicio || !panel) {
-        console.error("No se encontró la pantalla de inicio o el panel.");
-        return;
-    }
+    // INGRESAR AL SISTEMA
+    if (entrar && panel && inicio) {
 
-    // BOTÓN INGRESAR
-    if (entrar) {
         entrar.addEventListener("click", function () {
 
             inicio.hidden = true;
@@ -235,10 +232,12 @@ document.addEventListener("DOMContentLoaded", function () {
             window.scrollTo(0, 0);
 
         });
+
     }
 
-    // BOTÓN REGRESAR
-    if (regresar) {
+    // REGRESAR AL INICIO
+    if (regresar && panel && inicio) {
+
         regresar.addEventListener("click", function () {
 
             panel.hidden = true;
@@ -247,6 +246,7 @@ document.addEventListener("DOMContentLoaded", function () {
             window.scrollTo(0, 0);
 
         });
+
     }
 
 });
