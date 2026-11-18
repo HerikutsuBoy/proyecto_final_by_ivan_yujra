@@ -21,14 +21,14 @@
     </div>
     <nav class="menu" aria-label="Navegación principal">
 
-  <button type="button" id="btn-inicio" class="btn-menu-inicio">
-    Inicio
-  </button>
-
   <a href="#detencion">1. Detención</a>
   <a href="#mantenimiento">2. Mantenimiento</a>
   <a href="#viento">3. Viento</a>
   <a href="#sensores">4. Sensores</a>
+
+  <button type="button" id="btn-cerrar-sesion">
+    Cerrar sesión
+  </button>
 
 </nav>
   </header>
@@ -164,6 +164,136 @@
   <!-- EXPLICAR: el script va al final para que el HTML ya exista cuando JS lo busque -->
   <script src="js/script.js"></script>
 </body>
+  
+<!-- ==================================
+     SIMTELE-WEB - INICIO DE SESIÓN
+================================== -->
+
+<section id="pantalla-login" class="login-pantalla">
+
+  <div class="login-card">
+
+    <div class="login-logo">
+      <span>🚠</span>
+      <div>
+        <h1>SIMTELE-WEB</h1>
+        <p>Sistema de monitoreo y prevención</p>
+      </div>
+    </div>
+
+    <div class="login-titulo">
+      <h2>Iniciar sesión</h2>
+      <p>Ingresa tus credenciales para acceder a la plataforma.</p>
+    </div>
+
+    <!-- FORMULARIO DE ACCESO -->
+    <form id="form-login" novalidate>
+
+      <div class="login-campo">
+        <label for="login-identidad">Usuario o correo electrónico</label>
+        <input
+          type="text"
+          id="login-identidad"
+          placeholder="Ingresa tu usuario o correo"
+          autocomplete="username"
+        >
+      </div>
+
+      <div class="login-campo">
+        <label for="login-clave">Contraseña</label>
+        <input
+          type="password"
+          id="login-clave"
+          placeholder="Ingresa tu contraseña"
+          autocomplete="current-password"
+        >
+      </div>
+
+      <button type="submit" id="btn-acceder">
+        Iniciar sesión
+      </button>
+
+    </form>
+
+    <p id="login-mensaje" class="login-mensaje" role="status"></p>
+
+    <p id="login-intentos" class="login-intentos">
+      Intentos disponibles: 4
+    </p>
+
+    <!-- RECUPERACIÓN: APARECE DESPUÉS DE 4 ERRORES -->
+    <section id="recuperacion" hidden>
+
+      <div class="recuperacion-titulo">
+        <h3>Recuperar contraseña</h3>
+        <p>
+          Has alcanzado el máximo de intentos.
+          Identifica tu cuenta para continuar.
+        </p>
+      </div>
+
+      <form id="form-recuperacion" novalidate>
+
+        <div class="login-campo">
+          <label for="recuperar-identidad">
+            Usuario o correo registrado
+          </label>
+
+          <input
+            type="text"
+            id="recuperar-identidad"
+            placeholder="Ingresa tu usuario o correo"
+          >
+        </div>
+
+        <button type="submit">
+          Verificar cuenta
+        </button>
+
+      </form>
+
+      <!-- CAMBIO DE CONTRASEÑA -->
+      <form id="form-nueva-clave" novalidate hidden>
+
+        <div class="login-campo">
+          <label for="nueva-clave">Nueva contraseña</label>
+
+          <input
+            type="password"
+            id="nueva-clave"
+            placeholder="Mínimo 8 caracteres"
+          >
+        </div>
+
+        <div class="login-campo">
+          <label for="confirmar-clave">Confirmar contraseña</label>
+
+          <input
+            type="password"
+            id="confirmar-clave"
+            placeholder="Repite tu contraseña"
+          >
+        </div>
+
+        <button type="submit">
+          Restablecer contraseña
+        </button>
+
+      </form>
+
+      <p id="recuperacion-mensaje" class="login-mensaje" role="status"></p>
+
+    </section>
+
+    <div class="login-pie">
+      <span>SIMTELE-WEB © 2026</span>
+      <p>Plataforma educativa · Programación Web I</p>
+    </div>
+
+  </div>
+
+</section>
+
   <!-- ============ PANTALLA DE INICIO ============ -->
 <section id="inicio" class="inicio">
   <div class="inicio-contenido">
