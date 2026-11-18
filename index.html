@@ -214,6 +214,77 @@
       </button>
 
     </form>
+    
+<!-- OPCIÓN PARA CREAR UNA CUENTA -->
+<div class="login-opciones">
+  <p>¿Todavía no tienes una cuenta?</p>
+  <button type="button" id="btn-mostrar-registro" class="btn-registro">
+    Crear una cuenta
+  </button>
+</div>
+
+<!-- FORMULARIO DE REGISTRO -->
+<section id="registro-caja" hidden>
+
+  <div class="recuperacion-titulo">
+    <h3>Crear una cuenta</h3>
+    <p>Registra tus datos para acceder a SIMTELE-WEB.</p>
+  </div>
+
+  <form id="form-registro" novalidate>
+
+    <div class="login-campo">
+      <label for="registro-usuario">Nombre de usuario</label>
+      <input
+        type="text"
+        id="registro-usuario"
+        placeholder="Ej.: ivan123"
+        autocomplete="username"
+      >
+    </div>
+
+    <div class="login-campo">
+      <label for="registro-correo">Correo electrónico</label>
+      <input
+        type="email"
+        id="registro-correo"
+        placeholder="Ej.: correo@gmail.com"
+        autocomplete="email"
+      >
+    </div>
+
+    <div class="login-campo">
+      <label for="registro-clave">Contraseña</label>
+      <input
+        type="password"
+        id="registro-clave"
+        placeholder="Mínimo 8 caracteres"
+        autocomplete="new-password"
+      >
+    </div>
+
+    <div class="login-campo">
+      <label for="registro-confirmar">Confirmar contraseña</label>
+      <input
+        type="password"
+        id="registro-confirmar"
+        placeholder="Repite tu contraseña"
+        autocomplete="new-password"
+      >
+    </div>
+
+    <button type="submit">Registrarme</button>
+
+    <button type="button" id="btn-volver-login" class="btn-registro">
+      Volver al inicio de sesión
+    </button>
+
+  </form>
+
+  <p id="registro-mensaje" class="login-mensaje" role="status"></p>
+
+</section>
+
 
     <p id="login-mensaje" class="login-mensaje" role="status"></p>
 
