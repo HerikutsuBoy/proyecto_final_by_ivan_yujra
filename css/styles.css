@@ -723,3 +723,57 @@ code { background: rgba(255, 255, 255, .07); padding: 2px 7px; border-radius: 6p
     padding: 25px 20px;
   }
 }
+
+
+
+/* =====================================
+   REGISTRO DE NUEVOS USUARIOS
+===================================== */
+
+#registro-caja[hidden] {
+    display: none !important;
+}
+
+.login-opciones {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.login-opciones p {
+    color: var(--texto-suave);
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+button.btn-registro {
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(239,35,60,0.4);
+    color: #ff8a96;
+    box-shadow: none;
+    margin-top: 8px;
+}
+
+button.btn-registro:hover {
+    background: rgba(239,35,60,0.12);
+    box-shadow: none;
+}
+
+#registro-caja {
+    padding-top: 22px;
+    margin-top: 18px;
+    border-top: 1px solid rgba(239,35,60,0.25);
+}
+
+#form-registro {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+#form-registro button {
+    width: 100%;
+}
+
