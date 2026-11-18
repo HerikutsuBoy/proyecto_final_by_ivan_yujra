@@ -1,0 +1,132 @@
+/* ===== SIMTELE-WEB · styles.css =====
+   EXPLICAR: los colores están en variables (:root) para cambiarlos en un solo lugar. */
+:root {
+  --fondo: #0b1d2e;
+  --fondo-2: #112a42;
+  --tarjeta: #ffffff;
+  --texto: #1b2b3a;
+  --acento: #00a8a8;
+  --acento-oscuro: #007c8a;
+  --ok: #1f9d55;
+  --alerta: #e0a100;
+  --peligro: #d64545;
+  --borde: #d8e3ec;
+  --radio: 14px;
+  --sombra: 0 10px 30px rgba(8, 25, 40, .18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 130px; }
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  background: linear-gradient(160deg, var(--fondo), var(--fondo-2) 60%, #17405c);
+  background-attachment: fixed;
+  color: var(--texto);
+  line-height: 1.5;
+}
+
+/* ---------- Cabecera y menú (EXPLICAR: sticky = queda fijo al hacer scroll) ---------- */
+.cabecera {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(11, 29, 46, .92);
+  backdrop-filter: blur(8px);
+  border-bottom: 2px solid var(--acento);
+  padding: 14px 5%;
+  color: #fff;
+}
+.marca { display: flex; align-items: center; gap: 14px; }
+.logo { font-size: 2.4rem; }
+.marca h1 { font-size: 1.6rem; letter-spacing: 2px; color: #7ff0f0; }
+.marca p { font-size: .85rem; color: #b9cbd9; }
+
+.menu { display: flex; gap: 8px; margin-top: 12px; overflow-x: auto; padding-bottom: 4px; }
+.menu a {
+  color: #dbe8f2; text-decoration: none; white-space: nowrap;
+  padding: 7px 14px; border-radius: 999px;
+  border: 1px solid rgba(127, 240, 240, .35);
+  font-size: .9rem; transition: .2s;
+}
+.menu a:hover { background: var(--acento); color: #fff; transform: translateY(-2px); }
+
+/* ---------- Contenido ---------- */
+main { max-width: 900px; margin: 0 auto; padding: 26px 5% 40px; }
+
+.aviso-general {
+  background: #fff7dd; border-left: 5px solid var(--alerta);
+  padding: 12px 16px; border-radius: 10px; margin-bottom: 22px; font-size: .92rem;
+}
+
+.tarjeta {
+  background: var(--tarjeta); border-radius: var(--radio);
+  padding: 24px; margin-bottom: 24px; box-shadow: var(--sombra);
+  border-top: 5px solid var(--acento);
+}
+.tarjeta h2 { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; color: var(--fondo-2); }
+.num {
+  display: inline-grid; place-items: center; width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--acento), var(--acento-oscuro));
+  color: #fff; border-radius: 50%; font-size: 1.05rem;
+}
+.ayuda { color: #53697a; font-size: .92rem; margin-bottom: 16px; }
+
+/* ---------- Formularios (EXPLICAR: grid = columnas automáticas) ---------- */
+form { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.campo { display: flex; flex-direction: column; gap: 4px; }
+label { font-weight: 600; font-size: .9rem; }
+small { color: #6b7f8f; font-size: .78rem; }
+input, select {
+  padding: 10px 12px; border: 1.5px solid var(--borde); border-radius: 10px;
+  font-size: 1rem; background: #f8fbfd; transition: .2s; width: 100%;
+}
+input:focus, select:focus { outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px rgba(0, 168, 168, .2); }
+
+.fila-viento { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.botones { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* ---------- Botones ---------- */
+button {
+  cursor: pointer; border: none; border-radius: 10px; padding: 11px 20px;
+  font-size: .95rem; font-weight: 600; color: #fff;
+  background: linear-gradient(135deg, var(--acento), var(--acento-oscuro));
+  transition: .2s;
+}
+button:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0, 124, 138, .35); }
+button.secundario { background: #eef4f8; color: var(--acento-oscuro); border: 1.5px solid var(--borde); }
+button.eliminar { background: var(--peligro); padding: 6px 12px; font-size: .82rem; }
+
+/* ---------- Mensajes (EXPLICAR: JS cambia la clase ok / alerta / error) ---------- */
+.mensaje { margin-top: 14px; padding: 0; border-radius: 10px; font-weight: 600; }
+.mensaje:not(:empty) { padding: 12px 16px; }
+.mensaje.ok { background: #e3f6ec; color: #146c3b; border-left: 5px solid var(--ok); }
+.mensaje.alerta { background: #fff4d6; color: #805e00; border-left: 5px solid var(--alerta); }
+.mensaje.error { background: #fde8e8; color: #9b2c2c; border-left: 5px solid var(--peligro); }
+
+/* ---------- Tablas ---------- */
+.tabla-caja { overflow-x: auto; margin-top: 16px; border: 1px solid var(--borde); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; min-width: 420px; }
+th { background: var(--fondo-2); color: #fff; text-align: left; padding: 10px 14px; font-size: .88rem; }
+td { padding: 10px 14px; border-top: 1px solid var(--borde); }
+tbody tr:nth-child(even) { background: #f4f9fb; }
+.contador { margin-top: 10px; font-size: .9rem; }
+
+.etiqueta { padding: 3px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; color: #fff; }
+.etiqueta.normal { background: var(--ok); }
+.etiqueta.revisión { background: var(--alerta); }
+.etiqueta.urgente { background: var(--peligro); }
+
+.lista-check { list-style: none; display: grid; gap: 8px; }
+.lista-check li::before { content: "✔ "; color: var(--ok); font-weight: 700; }
+code { background: #eef4f8; padding: 2px 6px; border-radius: 6px; }
+
+.pie { text-align: center; padding: 22px; color: #9fb6c6; font-size: .85rem; }
+
+/* ---------- Diseño adaptable (EXPLICAR: esta media query se activa en pantallas pequeñas) ---------- */
+@media (max-width: 600px) {
+  .marca h1 { font-size: 1.3rem; }
+  .marca p { display: none; }
+  .tarjeta { padding: 18px; }
+  .fila-viento { grid-template-columns: repeat(2, 1fr); }
+  button { width: 100%; }
+  button.eliminar { width: auto; }
+}
