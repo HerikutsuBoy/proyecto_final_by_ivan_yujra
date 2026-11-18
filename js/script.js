@@ -205,3 +205,51 @@ $("prueba-sensores").addEventListener("click", cargarPruebaSensores);
 // Al abrir la página, dibuja lo que haya guardado (localStorage)
 dibujarMantenimiento();
 dibujarSensores();
+
+
+/* =====================================
+   NAVEGACIÓN DE LA PÁGINA DE INICIO
+===================================== */
+
+(() => {
+
+  const pantallaInicio = document.getElementById("inicio");
+  const panelPrincipal = document.getElementById("panel-principal");
+
+  const botonEntrar = document.getElementById("btn-entrar");
+  const botonInicio = document.getElementById("btn-inicio");
+
+  // Comprobar que los elementos existan
+  if (!pantallaInicio || !panelPrincipal ||
+      !botonEntrar || !botonInicio) {
+    return;
+  }
+
+  // INGRESAR AL SISTEMA
+  botonEntrar.addEventListener("click", () => {
+
+    pantallaInicio.hidden = true;
+    panelPrincipal.hidden = false;
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  });
+
+  // REGRESAR A LA PANTALLA DE INICIO
+  botonInicio.addEventListener("click", () => {
+
+    panelPrincipal.hidden = true;
+    pantallaInicio.hidden = false;
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  });
+
+})();
+
