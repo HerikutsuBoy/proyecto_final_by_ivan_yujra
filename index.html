@@ -23,8 +23,6 @@
       <a href="#mantenimiento">2. Mantenimiento</a>
       <a href="#viento">3. Viento</a>
       <a href="#sensores">4. Sensores</a>
-      <a href="#requisitos">Requisitos</a>
-      <a href="#pruebas">Pruebas</a>
     </nav>
   </header>
 
@@ -146,40 +144,6 @@
         <table>
           <thead><tr><th>Código</th><th>Tipo</th><th>Lectura</th><th>Acción</th></tr></thead>
           <tbody id="tabla-sensores"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ============ REQUISITOS TÉCNICOS ============ -->
-    <section id="requisitos" class="tarjeta">
-      <h2>Requisitos técnicos mínimos</h2>
-      <ul class="lista-check">
-        <li>HTML semántico: header, nav, main, section, footer; formularios con label y ayudas.</li>
-        <li>CSS propio con colores coherentes, tablas, botones y media query para celular.</li>
-        <li>JavaScript externo (script.js) con más de 4 funciones y addEventListener.</li>
-        <li>Actualización del DOM sin recargar la página.</li>
-        <li>Arreglos: mantenimiento (objetos), sensores (objetos) y viento (números).</li>
-        <li>Altas, visualización y eliminación de registros.</li>
-        <li>Expresión regular real: <code>/^SEN-\d{3}$/</code>.</li>
-        <li>Validación de rangos, vacíos y valores no numéricos, con mensajes claros.</li>
-        <li>Opcional: localStorage para conservar registros al recargar.</li>
-      </ul>
-    </section>
-
-    <!-- ============ PRUEBAS DE ACEPTACIÓN ============ -->
-    <section id="pruebas" class="tarjeta">
-      <h2>Pruebas mínimas de aceptación</h2>
-      <p class="ayuda">Usa el botón "Cargar datos de prueba" de cada módulo y presiona el botón principal.</p>
-      <div class="tabla-caja">
-        <table>
-          <thead><tr><th>Módulo</th><th>Entrada</th><th>Resultado esperado</th></tr></thead>
-          <tbody>
-            <tr><td>Detención</td><td>72 km/h y 3 s</td><td>60 m</td></tr>
-            <tr><td>Mantenimiento</td><td>Agregar 2 componentes y eliminar 1</td><td>2 filas, luego 1 fila</td></tr>
-            <tr><td>Viento</td><td>10, 20, 30, 40, 50</td><td>Promedio 30, máximo 50</td></tr>
-            <tr><td>Sensores</td><td>SEN-001 / SEN-1 / vacío</td><td>Válido / error / error</td></tr>
-            <tr><td>Navegación</td><td>Menú y controles en celular</td><td>Todo funciona</td></tr>
-          </tbody>
         </table>
       </div>
     </section>
