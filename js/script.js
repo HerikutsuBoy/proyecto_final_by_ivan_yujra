@@ -207,63 +207,399 @@ dibujarMantenimiento();
 dibujarSensores();
 
 
+
 /* ==========================================
-   SIMTELE-WEB - AUTENTICACIÓN DE DEMOSTRACIÓN
+   SIMTELE-WEB - REGISTRO Y AUTENTICACIÓN
 ========================================== */
 
-(function () {
+document.addEventListener("DOMContentLoaded", function () {
 
+    // ELEMENTOS PRINCIPALES
     const login = document.getElementById("pantalla-login");
     const panel = document.getElementById("panel-principal");
 
     const formularioLogin = document.getElementById("form-login");
+    const formularioRegistro = document.getElementById("form-registro");
     const formularioRecuperacion = document.getElementById("form-recuperacion");
     const formularioNuevaClave = document.getElementById("form-nueva-clave");
 
+    const registroCaja = document.getElementById("registro-caja");
     const recuperacion = document.getElementById("recuperacion");
 
+    const btnMostrarRegistro = document.getElementById("btn-mostrar-registro");
+    const btnVolverLogin = document.getElementById("btn-volver-login");
+    const btnCerrar = document.getElementById("btn-cerrar-sesion");
+
     const mensajeLogin = document.getElementById("login-mensaje");
+    const mensajeRegistro = document.getElementById("registro-mensaje");
     const mensajeRecuperacion = document.getElementById("recuperacion-mensaje");
 
     const intentosTexto = document.getElementById("login-intentos");
 
-    const botonCerrar = document.getElementById("btn-cerrar-sesion");
-
-    // CUENTA DE PRUEBA
-    const usuarioCorrecto = "admin";
-    const correoCorrecto = "admin@simteleweb.com";
-    const claveInicial = "Simtele2026!";
-
-    let claveActual = claveInicial;
-    let intentos = 0;
-    const maxIntentos = 4;
-
-    // Recuperar contraseña de demostración durante la sesión del navegador
-    try {
-        claveActual =
-            sessionStorage.getItem("simtele-demo-clave") || claveInicial;
-    } catch (error) {
-        console.warn("No se pudo acceder a sessionStorage.");
-    }
-
-    // Comprobar que existen los elementos
+    // COMPROBAR ELEMENTOS
     if (!login || !panel || !formularioLogin ||
-        !formularioRecuperacion || !formularioNuevaClave) {
+        !formularioRegistro || !formularioRecuperacion ||
+        !formularioNuevaClave) {
 
-        console.error("Error: no se encontraron los elementos de autenticación.");
+        console.error("Faltan elementos del sistema de autenticación.");
         return;
     }
 
-    function mostrarMensaje(elemento, texto) {
+    // BASE DE DATOS LOCAL DE USUARIOS
+    const CLAVE_STORAGE = "simtele-usuarios";
+
+    function obtenerUsuarios() {
+        try {
+            const datos = JSON.parse(localStorage.getItem(CLAVE_STORAGE));
+            return Array.isArray(datos) ? datos : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function guardarUsuarios(usuarios) {
+        localStorage.setItem(CLAVE_STORAGE, JSON.stringify(usuarios));
+    }
+
+    let usuarios = obtenerUsuarios();
+
+    // VARIABLES
+    let intentos = 0;
+    const maxIntentos = 4;
+    let cuentaRecuperacion = null;
+
+    // MENSAJES
+    function mensaje(elemento, texto) {
         elemento.textContent = texto;
     }
 
-    function esCuentaValida(identidad) {
+    // BUSCAR CUENTA POR USUARIO O CORREO
+    function buscarCuenta(identidad) {
+
         const dato = identidad.trim().toLowerCase();
 
-        return dato === usuarioCorrecto ||
-               dato === correoCorrecto;
+        return usuarios.find(function (cuenta) {
+            return cuenta.usuario.toLowerCase() === dato ||
+                   cuenta.correo.toLowerCase() === dato;
+        });
     }
+
+    // =====================================
+    // 1. MOSTRAR FORMULARIO DE REGISTRO
+    // =====================================
+
+    btnMostrarRegistro.addEventListener("click", function () {
+
+        registroCaja.hidden = false;
+        mensaje(mensajeRegistro, "");
+
+        document.getElementById("btn-mostrar-registro").hidden = true;
+
+        document.getElementById("registro-usuario").focus();
+
+    });
+
+    btnVolverLogin.addEventListener("click", function () {
+
+        registroCaja.hidden = true;
+        btnMostrarRegistro.hidden = false;
+
+        formularioRegistro.reset();
+        mensaje(mensajeRegistro, "");
+
+    });
+
+    // =====================================
+    // 2. REGISTRAR NUEVO USUARIO
+    // =====================================
+
+    formularioRegistro.addEventListener("submit", function (evento) {
+
+        evento.preventDefault();
+
+        const usuario = document.getElementById("registro-usuario").value.trim();
+        const correo = document.getElementById("registro-correo").value.trim().toLowerCase();
+        const clave = document.getElementById("registro-clave").value;
+        const confirmar = document.getElementById("registro-confirmar").value;
+
+        // VALIDACIONES
+
+        if (!usuario || !correo || !clave || !confirmar) {
+            mensaje(mensajeRegistro, "Completa todos los campos.");
+            return;
+        }
+
+        if (!/^[a-zA-Z0-9._-]{3,20}$/.test(usuario)) {
+            mensaje(mensajeRegistro, "El usuario debe tener entre 3 y 20 caracteres. Usa letras, números, puntos, guiones o guion bajo.");
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+            mensaje(mensajeRegistro, "Introduce un correo electrónico válido.");
+            return;
+        }
+
+        if (clave.length < 8) {
+            mensaje(mensajeRegistro, "La contraseña debe tener al menos 8 caracteres.");
+            return;
+        }
+
+        if (clave !== confirmar) {
+            mensaje(mensajeRegistro, "Las contraseñas no coinciden.");
+            return;
+        }
+
+        // VERIFICAR SI YA EXISTE EL USUARIO O CORREO
+
+        const repetido = usuarios.some(function (cuenta) {
+
+            return cuenta.usuario.toLowerCase() === usuario.toLowerCase() ||
+                   cuenta.correo.toLowerCase() === correo;
+
+        });
+
+        if (repetido) {
+            mensaje(mensajeRegistro, "Ese usuario o correo ya está registrado.");
+            return;
+        }
+
+        // CREAR CUENTA
+
+        usuarios.push({
+            usuario: usuario,
+            correo: correo,
+            clave: clave
+        });
+
+        try {
+            guardarUsuarios(usuarios);
+        } catch (error) {
+            usuarios.pop();
+            mensaje(mensajeRegistro, "No se pudo guardar la cuenta en este navegador.");
+            return;
+        }
+
+        // REGISTRO COMPLETADO
+
+        formularioRegistro.reset();
+        registroCaja.hidden = true;
+        btnMostrarRegistro.hidden = false;
+
+        document.getElementById("login-identidad").value = usuario;
+
+        mensaje(
+            mensajeLogin,
+            "¡Cuenta creada correctamente! Ahora puedes iniciar sesión."
+        );
+
+        mensaje(mensajeRegistro, "");
+
+        window.scrollTo(0, 0);
+
+    });
+
+    // =====================================
+    // 3. INICIAR SESIÓN
+    // =====================================
+
+    formularioLogin.addEventListener("submit", function (evento) {
+
+        evento.preventDefault();
+
+        if (intentos >= maxIntentos) {
+            return;
+        }
+
+        const identidad = document.getElementById("login-identidad").value.trim();
+        const clave = document.getElementById("login-clave").value;
+
+        if (!identidad || !clave) {
+            mensaje(mensajeLogin, "Completa el usuario y la contraseña.");
+            return;
+        }
+
+        const cuenta = buscarCuenta(identidad);
+
+        if (cuenta && cuenta.clave === clave) {
+
+            mensaje(mensajeLogin, "Acceso correcto.");
+
+            intentos = 0;
+
+            login.hidden = true;
+            panel.hidden = false;
+
+            formularioLogin.reset();
+
+            window.scrollTo(0, 0);
+
+        } else {
+
+            intentos++;
+
+            const restantes = maxIntentos - intentos;
+
+            if (restantes > 0) {
+
+                mensaje(
+                    mensajeLogin,
+                    "Credenciales incorrectas. Intentos restantes: " + restantes
+                );
+
+                intentosTexto.textContent =
+                    "Intentos disponibles: " + restantes;
+
+            } else {
+
+                mensaje(
+                    mensajeLogin,
+                    "Has alcanzado los cuatro intentos. Recupera tu cuenta."
+                );
+
+                intentosTexto.textContent = "Máximo de intentos alcanzado.";
+
+                formularioLogin.querySelectorAll("input, button")
+                    .forEach(function (elemento) {
+                        elemento.disabled = true;
+                    });
+
+                recuperacion.hidden = false;
+
+                document.getElementById("recuperar-identidad").focus();
+
+            }
+
+        }
+
+    });
+
+    // =====================================
+    // 4. RECUPERAR CONTRASEÑA
+    // =====================================
+
+    formularioRecuperacion.addEventListener("submit", function (evento) {
+
+        evento.preventDefault();
+
+        const identidad = document.getElementById("recuperar-identidad").value.trim();
+
+        if (!identidad) {
+            mensaje(mensajeRecuperacion, "Escribe tu usuario o correo.");
+            return;
+        }
+
+        cuentaRecuperacion = buscarCuenta(identidad);
+
+        if (cuentaRecuperacion) {
+
+            mensaje(
+                mensajeRecuperacion,
+                "Cuenta encontrada. Puedes establecer una nueva contraseña en esta demostración."
+            );
+
+            formularioNuevaClave.hidden = false;
+
+        } else {
+
+            mensaje(
+                mensajeRecuperacion,
+                "No existe una cuenta registrada con esos datos."
+            );
+
+        }
+
+    });
+
+    // =====================================
+    // 5. ESTABLECER NUEVA CONTRASEÑA
+    // =====================================
+
+    formularioNuevaClave.addEventListener("submit", function (evento) {
+
+        evento.preventDefault();
+
+        if (!cuentaRecuperacion) {
+            mensaje(mensajeRecuperacion, "Primero debes identificar tu cuenta.");
+            return;
+        }
+
+        const nueva = document.getElementById("nueva-clave").value;
+        const confirmar = document.getElementById("confirmar-clave").value;
+
+        if (nueva.length < 8) {
+            mensaje(mensajeRecuperacion, "La contraseña debe tener al menos 8 caracteres.");
+            return;
+        }
+
+        if (nueva !== confirmar) {
+            mensaje(mensajeRecuperacion, "Las contraseñas no coinciden.");
+            return;
+        }
+
+        cuentaRecuperacion.clave = nueva;
+
+        try {
+            guardarUsuarios(usuarios);
+        } catch (error) {
+            mensaje(mensajeRecuperacion, "No se pudo guardar la nueva contraseña.");
+            return;
+        }
+
+        // REINICIAR EL ACCESO
+
+        intentos = 0;
+
+        formularioLogin.reset();
+        formularioRecuperacion.reset();
+        formularioNuevaClave.reset();
+
+        formularioNuevaClave.hidden = true;
+        recuperacion.hidden = true;
+
+        formularioLogin.querySelectorAll("input, button")
+            .forEach(function (elemento) {
+                elemento.disabled = false;
+            });
+
+        intentosTexto.textContent = "Intentos disponibles: 4";
+
+        mensaje(
+            mensajeLogin,
+            "Contraseña actualizada. Ya puedes iniciar sesión."
+        );
+
+        mensaje(mensajeRecuperacion, "");
+
+        document.getElementById("login-identidad").value =
+            cuentaRecuperacion.usuario;
+
+        cuentaRecuperacion = null;
+
+    });
+
+    // =====================================
+    // 6. CERRAR SESIÓN
+    // =====================================
+
+    if (btnCerrar) {
+
+        btnCerrar.addEventListener("click", function () {
+
+            panel.hidden = true;
+            login.hidden = false;
+
+            formularioLogin.reset();
+
+            mensaje(mensajeLogin, "Sesión cerrada correctamente.");
+
+            window.scrollTo(0, 0);
+
+        });
+
+    }
+
+});
+
 
     // ==================================
     // 1. INICIAR SESIÓN
