@@ -208,48 +208,45 @@ dibujarSensores();
 
 
 /* =====================================
-   NAVEGACIÓN DE LA PÁGINA DE INICIO
+   NAVEGACIÓN SIMTELE-WEB
 ===================================== */
 
-(() => {
+document.addEventListener("DOMContentLoaded", function () {
 
-  const pantallaInicio = document.getElementById("inicio");
-  const panelPrincipal = document.getElementById("panel-principal");
+    const inicio = document.getElementById("inicio");
+    const panel = document.getElementById("panel-principal");
 
-  const botonEntrar = document.getElementById("btn-entrar");
-  const botonInicio = document.getElementById("btn-inicio");
+    const entrar = document.getElementById("btn-entrar");
+    const regresar = document.getElementById("btn-inicio");
 
-  // Comprobar que los elementos existan
-  if (!pantallaInicio || !panelPrincipal ||
-      !botonEntrar || !botonInicio) {
-    return;
-  }
+    // Comprobar los elementos principales
+    if (!inicio || !panel) {
+        console.error("No se encontró la pantalla de inicio o el panel.");
+        return;
+    }
 
-  // INGRESAR AL SISTEMA
-  botonEntrar.addEventListener("click", () => {
+    // BOTÓN INGRESAR
+    if (entrar) {
+        entrar.addEventListener("click", function () {
 
-    pantallaInicio.hidden = true;
-    panelPrincipal.hidden = false;
+            inicio.hidden = true;
+            panel.hidden = false;
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+            window.scrollTo(0, 0);
 
-  });
+        });
+    }
 
-  // REGRESAR A LA PANTALLA DE INICIO
-  botonInicio.addEventListener("click", () => {
+    // BOTÓN REGRESAR
+    if (regresar) {
+        regresar.addEventListener("click", function () {
 
-    panelPrincipal.hidden = true;
-    pantallaInicio.hidden = false;
+            panel.hidden = true;
+            inicio.hidden = false;
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+            window.scrollTo(0, 0);
 
-  });
+        });
+    }
 
-})();
-
+});
