@@ -1,820 +1,907 @@
+
 /* ===== SIMTELE-WEB · script.js =====
-   ESTRUCTURA PARA EXPLICAR: 0) Utilidades  1) Detención  2) Mantenimiento
-   3) Viento  4) Sensores. Cada módulo: leer datos -> validar -> procesar -> mostrar en el DOM. */
-
-// ---------- 0. UTILIDADES ----------
-// EXPLICAR: atajo para no repetir document.getElementById
-const $ = (id) => document.getElementById(id);
-
-// EXPLICAR: función reutilizable que muestra un mensaje (tipo: "ok", "alerta" o "error")
-function mostrarMensaje(elemento, texto, tipo) {
-  elemento.textContent = texto;
-  elemento.className = "mensaje " + tipo; // la clase CSS cambia el color
-}
-
-// EXPLICAR: un valor es válido si NO está vacío y es número (acepta coma decimal)
-function leerNumero(texto) {
-  const limpio = texto.trim().replace(",", ".");
-  if (limpio === "") return NaN;
-  return Number(limpio);
-}
-
-// EXPLICAR: localStorage (opcional) guarda los arreglos en el navegador como texto JSON
-function guardar(clave, arreglo) { localStorage.setItem(clave, JSON.stringify(arreglo)); }
-function cargar(clave) { return JSON.parse(localStorage.getItem(clave)) || []; }
-
-// ---------- 1. DETENCIÓN DE EMERGENCIA ----------
-const UMBRAL_DISTANCIA = 50; // metros (valor ficticio, solo didáctico)
-
-function calcularDetencion(evento) {
-  evento.preventDefault(); // EXPLICAR: evita que el formulario recargue la página
-  const salida = $("msg-detencion");
-  const v = leerNumero($("velocidad").value);
-  const t = leerNumero($("reaccion").value);
-
-  // Validaciones: vacío / no numérico, y rangos
-  if (isNaN(v) || isNaN(t)) {
-    mostrarMensaje(salida, "Error: ingresa solo números en ambos campos (no pueden estar vacíos).", "error");
-    return;
-  }
-  if (v < 1 || v > 100 || t < 0.1 || t > 20) {
-    mostrarMensaje(salida, "Error: velocidad entre 1 y 100 km/h, tiempo entre 0.1 y 20 s.", "error");
-    return;
-  }
-
-  const distancia = (v / 3.6) * t; // fórmula del desafío
-  const texto = "Distancia durante la reacción: " + distancia.toFixed(1) + " m. ";
-
-  // EXPLICAR: if / else con el umbral ficticio
-  if (distancia >= UMBRAL_DISTANCIA) {
-    mostrarMensaje(salida, texto + "ALERTA (simulada): supera el umbral de " + UMBRAL_DISTANCIA + " m.", "alerta");
-  } else {
-    mostrarMensaje(salida, texto + "Dentro del umbral didáctico de " + UMBRAL_DISTANCIA + " m.", "ok");
-  }
-}
-
-// ---------- 2. MANTENIMIENTO ----------
-// EXPLICAR: arreglo de OBJETOS, cada registro = { componente, horas, estado }
-let componentes = cargar("simtele-componentes");
-
-function agregarComponente(evento) {
-  evento.preventDefault();
-  const salida = $("msg-mantenimiento");
-  const nombre = $("componente").value.trim();
-  const horas = leerNumero($("horas").value);
-
-  if (nombre === "") { mostrarMensaje(salida, "Error: escribe el nombre del componente.", "error"); return; }
-  if (isNaN(horas) || horas < 0) { mostrarMensaje(salida, "Error: las horas deben ser un número mayor o igual a 0.", "error"); return; }
-
-  componentes.push({ componente: nombre, horas: horas, estado: $("estado").value }); // alta con push
-  guardar("simtele-componentes", componentes);
-  $("form-mantenimiento").reset();
-  mostrarMensaje(salida, "Registro agregado correctamente.", "ok");
-  dibujarMantenimiento();
-}
-
-// EXPLICAR: recorre el arreglo y crea una fila <tr> por cada objeto (así se actualiza el DOM)
-function dibujarMantenimiento() {
-  const cuerpo = $("tabla-mantenimiento");
-  cuerpo.innerHTML = "";
-  componentes.forEach(function (item, indice) {
-    const fila = document.createElement("tr");
-    fila.innerHTML =
-      "<td></td><td></td>" +
-      '<td><span class="etiqueta ' + item.estado + '">' + item.estado + "</span></td>" +
-      '<td><button class="eliminar" data-indice="' + indice + '">Eliminar</button></td>';
-    fila.children[0].textContent = item.componente; // textContent evita insertar HTML malicioso
-    fila.children[1].textContent = item.horas;
-    cuerpo.appendChild(fila);
-  });
-  $("cuenta-mantenimiento").textContent = componentes.length;
-}
-
-// EXPLICAR: un solo evento en la tabla detecta qué botón "Eliminar" se pulsó; splice borra 1 elemento
-function eliminarComponente(evento) {
-  if (evento.target.classList.contains("eliminar")) {
-    componentes.splice(Number(evento.target.dataset.indice), 1);
-    guardar("simtele-componentes", componentes);
-    mostrarMensaje($("msg-mantenimiento"), "Registro eliminado.", "ok");
-    dibujarMantenimiento();
-  }
-}
-
-// ---------- 3. VIENTO Y OSCILACIÓN ----------
-function analizarViento(evento) {
-  evento.preventDefault();
-  const salida = $("msg-viento");
-  const campos = document.querySelectorAll(".viento-input");
-  const mediciones = []; // EXPLICAR: arreglo de números
-
-  for (let i = 0; i < campos.length; i++) {
-    const valor = leerNumero(campos[i].value);
-    if (isNaN(valor) || valor < 0) {
-      mostrarMensaje(salida, "Error: la medición " + (i + 1) + " está vacía o no es un número válido (≥ 0).", "error");
-      return;
-    }
-    mediciones.push(valor);
-  }
-
-  // EXPLICAR: for para sumar y buscar el máximo
-  let suma = 0;
-  let maximo = mediciones[0];
-  for (let i = 0; i < mediciones.length; i++) {
-    suma += mediciones[i];
-    if (mediciones[i] > maximo) maximo = mediciones[i];
-  }
-  const promedio = suma / mediciones.length;
-
-  // Clasificación didáctica por umbrales
-  let clase, tipo;
-  if (promedio < 20) { clase = "Calma"; tipo = "ok"; }
-  else if (promedio < 40) { clase = "Moderado"; tipo = "alerta"; }
-  else { clase = "Fuerte"; tipo = "error"; }
-
-  mostrarMensaje(salida, "Promedio: " + promedio.toFixed(1) + " km/h · Máximo: " + maximo + " km/h · Clasificación (simulada): " + clase, tipo);
-}
-
-// ---------- 4. SENSORES ----------
-const REGEX_CODIGO = /^SEN-\d{3}$/; // EXPLICAR: ^ inicio, SEN- literal, \d{3} tres dígitos, $ fin
-let sensores = cargar("simtele-sensores");
-
-function registrarSensor(evento) {
-  evento.preventDefault();
-  const salida = $("msg-sensores");
-  const codigo = $("codigo").value.trim();
-  const lectura = leerNumero($("lectura").value);
-
-  if (codigo === "") { mostrarMensaje(salida, "Error: el código está vacío.", "error"); return; }
-  if (!REGEX_CODIGO.test(codigo)) { mostrarMensaje(salida, "Error: código inválido. Usa el formato SEN-001.", "error"); return; } // test() devuelve true/false
-  if (isNaN(lectura)) { mostrarMensaje(salida, "Error: la lectura está vacía o no es numérica.", "error"); return; }
-
-  sensores.push({ codigo: codigo, tipo: $("tipo").value, lectura: lectura });
-  guardar("simtele-sensores", sensores);
-  $("form-sensores").reset();
-  mostrarMensaje(salida, "Sensor " + codigo + " registrado (válido).", "ok");
-  dibujarSensores();
-}
-
-function dibujarSensores() {
-  const cuerpo = $("tabla-sensores");
-  cuerpo.innerHTML = "";
-  sensores.forEach(function (s, indice) {
-    const fila = document.createElement("tr");
-    fila.innerHTML = "<td></td><td></td><td></td>" +
-      '<td><button class="eliminar" data-indice="' + indice + '">Eliminar</button></td>';
-    fila.children[0].textContent = s.codigo;
-    fila.children[1].textContent = s.tipo;
-    fila.children[2].textContent = s.lectura;
-    cuerpo.appendChild(fila);
-  });
-}
-
-function eliminarSensor(evento) {
-  if (evento.target.classList.contains("eliminar")) {
-    sensores.splice(Number(evento.target.dataset.indice), 1);
-    guardar("simtele-sensores", sensores);
-    dibujarSensores();
-  }
-}
-
-// ---------- DATOS DE PRUEBA (solo rellenan los campos; tú pulsas el botón principal) ----------
-function cargarPruebaDetencion() { $("velocidad").value = "72"; $("reaccion").value = "3"; }
-function cargarPruebaMantenimiento() {
-  const n = componentes.length + 1;
-  $("componente").value = "Componente " + n; $("horas").value = 100 * n; $("estado").value = "normal";
-}
-function cargarPruebaViento() {
-  const datos = [10, 20, 30, 40, 50];
-  document.querySelectorAll(".viento-input").forEach(function (campo, i) { campo.value = datos[i]; });
-}
-function cargarPruebaSensores() { $("codigo").value = "SEN-001"; $("tipo").value = "Viento"; $("lectura").value = "25.5"; }
-
-// ---------- EVENTOS (EXPLICAR: addEventListener conecta cada botón/formulario con su función) ----------
-$("form-detencion").addEventListener("submit", calcularDetencion);
-$("form-mantenimiento").addEventListener("submit", agregarComponente);
-$("tabla-mantenimiento").addEventListener("click", eliminarComponente);
-$("form-viento").addEventListener("submit", analizarViento);
-$("form-sensores").addEventListener("submit", registrarSensor);
-$("tabla-sensores").addEventListener("click", eliminarSensor);
-
-$("prueba-detencion").addEventListener("click", cargarPruebaDetencion);
-$("prueba-mantenimiento").addEventListener("click", cargarPruebaMantenimiento);
-$("prueba-viento").addEventListener("click", cargarPruebaViento);
-$("prueba-sensores").addEventListener("click", cargarPruebaSensores);
-
-// Al abrir la página, dibuja lo que haya guardado (localStorage)
-dibujarMantenimiento();
-dibujarSensores();
-
-
-
-/* ==========================================
-   SIMTELE-WEB - REGISTRO Y AUTENTICACIÓN
-========================================== */
+   MÓDULOS:
+   0) Utilidades
+   1) Detención
+   2) Mantenimiento
+   3) Viento
+   4) Sensores
+   5) Registro y autenticación
+*/
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    // ELEMENTOS PRINCIPALES
-    const login = document.getElementById("pantalla-login");
-    const panel = document.getElementById("panel-principal");
+  // =====================================
+  // 0. UTILIDADES
+  // =====================================
 
-    const formularioLogin = document.getElementById("form-login");
-    const formularioRegistro = document.getElementById("form-registro");
-    const formularioRecuperacion = document.getElementById("form-recuperacion");
-    const formularioNuevaClave = document.getElementById("form-nueva-clave");
+  const $ = (id) => document.getElementById(id);
 
-    const registroCaja = document.getElementById("registro-caja");
-    const recuperacion = document.getElementById("recuperacion");
+  function mostrarMensaje(elemento, texto, tipo) {
+    if (!elemento) return;
+    elemento.textContent = texto;
+    elemento.className = "mensaje " + tipo;
+  }
 
-    const btnMostrarRegistro = document.getElementById("btn-mostrar-registro");
-    const btnVolverLogin = document.getElementById("btn-volver-login");
-    const btnCerrar = document.getElementById("btn-cerrar-sesion");
+  function leerNumero(texto) {
+    const limpio = texto.trim().replace(",", ".");
+    if (limpio === "") return NaN;
+    return Number(limpio);
+  }
 
-    const mensajeLogin = document.getElementById("login-mensaje");
-    const mensajeRegistro = document.getElementById("registro-mensaje");
-    const mensajeRecuperacion = document.getElementById("recuperacion-mensaje");
+  function guardar(clave, arreglo) {
+    localStorage.setItem(clave, JSON.stringify(arreglo));
+  }
 
-    const intentosTexto = document.getElementById("login-intentos");
+  function cargar(clave) {
+    try {
+      return JSON.parse(localStorage.getItem(clave)) || [];
+    } catch (error) {
+      return [];
+    }
+  }
 
-    // COMPROBAR ELEMENTOS
-    if (!login || !panel || !formularioLogin ||
-        !formularioRegistro || !formularioRecuperacion ||
-        !formularioNuevaClave) {
 
-        console.error("Faltan elementos del sistema de autenticación.");
+  // =====================================
+  // 1. DETENCIÓN DE EMERGENCIA
+  // =====================================
+
+  const UMBRAL_DISTANCIA = 50;
+
+  function calcularDetencion(evento) {
+    evento.preventDefault();
+
+    const salida = $("msg-detencion");
+    const v = leerNumero($("velocidad").value);
+    const t = leerNumero($("reaccion").value);
+
+    if (isNaN(v) || isNaN(t)) {
+      mostrarMensaje(
+        salida,
+        "Error: ingresa solo números en ambos campos.",
+        "error"
+      );
+      return;
+    }
+
+    if (v < 1 || v > 100 || t < 0.1 || t > 20) {
+      mostrarMensaje(
+        salida,
+        "Error: velocidad entre 1 y 100 km/h y tiempo entre 0.1 y 20 s.",
+        "error"
+      );
+      return;
+    }
+
+    const distancia = (v / 3.6) * t;
+
+    const texto =
+      "Distancia durante la reacción: " +
+      distancia.toFixed(1) + " m. ";
+
+    if (distancia >= UMBRAL_DISTANCIA) {
+      mostrarMensaje(
+        salida,
+        texto + "ALERTA (simulada): supera el umbral de 50 m.",
+        "alerta"
+      );
+    } else {
+      mostrarMensaje(
+        salida,
+        texto + "Dentro del umbral didáctico de 50 m.",
+        "ok"
+      );
+    }
+  }
+
+
+  // =====================================
+  // 2. MANTENIMIENTO
+  // =====================================
+
+  let componentes = cargar("simtele-componentes");
+
+  function agregarComponente(evento) {
+    evento.preventDefault();
+
+    const salida = $("msg-mantenimiento");
+    const nombre = $("componente").value.trim();
+    const horas = leerNumero($("horas").value);
+
+    if (nombre === "") {
+      mostrarMensaje(salida, "Error: escribe el nombre del componente.", "error");
+      return;
+    }
+
+    if (isNaN(horas) || horas < 0) {
+      mostrarMensaje(salida, "Error: las horas deben ser un número mayor o igual a 0.", "error");
+      return;
+    }
+
+    componentes.push({
+      componente: nombre,
+      horas: horas,
+      estado: $("estado").value
+    });
+
+    guardar("simtele-componentes", componentes);
+
+    $("form-mantenimiento").reset();
+
+    mostrarMensaje(salida, "Registro agregado correctamente.", "ok");
+
+    dibujarMantenimiento();
+  }
+
+  function dibujarMantenimiento() {
+    const cuerpo = $("tabla-mantenimiento");
+    if (!cuerpo) return;
+
+    cuerpo.innerHTML = "";
+
+    componentes.forEach(function (item, indice) {
+
+      const fila = document.createElement("tr");
+
+      fila.innerHTML =
+        "<td></td><td></td>" +
+        '<td><span class="etiqueta ' + item.estado + '">' +
+        item.estado + "</span></td>" +
+        '<td><button class="eliminar" data-indice="' +
+        indice + '">Eliminar</button></td>';
+
+      fila.children[0].textContent = item.componente;
+      fila.children[1].textContent = item.horas;
+
+      cuerpo.appendChild(fila);
+
+    });
+
+    $("cuenta-mantenimiento").textContent = componentes.length;
+  }
+
+  function eliminarComponente(evento) {
+    if (evento.target.classList.contains("eliminar")) {
+
+      componentes.splice(Number(evento.target.dataset.indice), 1);
+
+      guardar("simtele-componentes", componentes);
+
+      mostrarMensaje(
+        $("msg-mantenimiento"),
+        "Registro eliminado.",
+        "ok"
+      );
+
+      dibujarMantenimiento();
+    }
+  }
+
+
+  // =====================================
+  // 3. VIENTO Y OSCILACIÓN
+  // =====================================
+
+  function analizarViento(evento) {
+    evento.preventDefault();
+
+    const salida = $("msg-viento");
+    const campos = document.querySelectorAll(".viento-input");
+    const mediciones = [];
+
+    for (let i = 0; i < campos.length; i++) {
+
+      const valor = leerNumero(campos[i].value);
+
+      if (isNaN(valor) || valor < 0) {
+        mostrarMensaje(
+          salida,
+          "Error: la medición " + (i + 1) +
+          " está vacía o no es válida.",
+          "error"
+        );
         return;
+      }
+
+      mediciones.push(valor);
     }
 
-    // BASE DE DATOS LOCAL DE USUARIOS
-    const CLAVE_STORAGE = "simtele-usuarios";
+    let suma = 0;
+    let maximo = mediciones[0];
 
-    function obtenerUsuarios() {
-        try {
-            const datos = JSON.parse(localStorage.getItem(CLAVE_STORAGE));
-            return Array.isArray(datos) ? datos : [];
-        } catch (error) {
-            return [];
-        }
+    for (let i = 0; i < mediciones.length; i++) {
+
+      suma += mediciones[i];
+
+      if (mediciones[i] > maximo) {
+        maximo = mediciones[i];
+      }
     }
 
-    function guardarUsuarios(usuarios) {
-        localStorage.setItem(CLAVE_STORAGE, JSON.stringify(usuarios));
+    const promedio = suma / mediciones.length;
+
+    let clase, tipo;
+
+    if (promedio < 20) {
+      clase = "Calma";
+      tipo = "ok";
+    } else if (promedio < 40) {
+      clase = "Moderado";
+      tipo = "alerta";
+    } else {
+      clase = "Fuerte";
+      tipo = "error";
     }
 
-    let usuarios = obtenerUsuarios();
+    mostrarMensaje(
+      salida,
+      "Promedio: " + promedio.toFixed(1) +
+      " km/h · Máximo: " + maximo +
+      " km/h · Clasificación (simulada): " + clase,
+      tipo
+    );
+  }
 
-    // VARIABLES
-    let intentos = 0;
-    const maxIntentos = 4;
-    let cuentaRecuperacion = null;
 
-    // MENSAJES
-    function mensaje(elemento, texto) {
-        elemento.textContent = texto;
+  // =====================================
+  // 4. SENSORES
+  // =====================================
+
+  const REGEX_CODIGO = /^SEN-\d{3}$/;
+
+  let sensores = cargar("simtele-sensores");
+
+  function registrarSensor(evento) {
+    evento.preventDefault();
+
+    const salida = $("msg-sensores");
+
+    const codigo = $("codigo").value.trim();
+    const lectura = leerNumero($("lectura").value);
+
+    if (codigo === "") {
+      mostrarMensaje(salida, "Error: el código está vacío.", "error");
+      return;
     }
 
-    // BUSCAR CUENTA POR USUARIO O CORREO
-    function buscarCuenta(identidad) {
-
-        const dato = identidad.trim().toLowerCase();
-
-        return usuarios.find(function (cuenta) {
-            return cuenta.usuario.toLowerCase() === dato ||
-                   cuenta.correo.toLowerCase() === dato;
-        });
+    if (!REGEX_CODIGO.test(codigo)) {
+      mostrarMensaje(salida, "Error: código inválido. Usa SEN-001.", "error");
+      return;
     }
 
-    // =====================================
-    // 1. MOSTRAR FORMULARIO DE REGISTRO
-    // =====================================
+    if (isNaN(lectura)) {
+      mostrarMensaje(salida, "Error: la lectura no es numérica.", "error");
+      return;
+    }
+
+    sensores.push({
+      codigo: codigo,
+      tipo: $("tipo").value,
+      lectura: lectura
+    });
+
+    guardar("simtele-sensores", sensores);
+
+    $("form-sensores").reset();
+
+    mostrarMensaje(
+      salida,
+      "Sensor " + codigo + " registrado correctamente.",
+      "ok"
+    );
+
+    dibujarSensores();
+  }
+
+  function dibujarSensores() {
+    const cuerpo = $("tabla-sensores");
+    if (!cuerpo) return;
+
+    cuerpo.innerHTML = "";
+
+    sensores.forEach(function (s, indice) {
+
+      const fila = document.createElement("tr");
+
+      fila.innerHTML =
+        "<td></td><td></td><td></td>" +
+        '<td><button class="eliminar" data-indice="' +
+        indice + '">Eliminar</button></td>';
+
+      fila.children[0].textContent = s.codigo;
+      fila.children[1].textContent = s.tipo;
+      fila.children[2].textContent = s.lectura;
+
+      cuerpo.appendChild(fila);
+
+    });
+  }
+
+  function eliminarSensor(evento) {
+    if (evento.target.classList.contains("eliminar")) {
+
+      sensores.splice(Number(evento.target.dataset.indice), 1);
+
+      guardar("simtele-sensores", sensores);
+
+      dibujarSensores();
+    }
+  }
+
+
+  // =====================================
+  // DATOS DE PRUEBA
+  // =====================================
+
+  function cargarPruebaDetencion() {
+    $("velocidad").value = "72";
+    $("reaccion").value = "3";
+  }
+
+  function cargarPruebaMantenimiento() {
+
+    const n = componentes.length + 1;
+
+    $("componente").value = "Componente " + n;
+    $("horas").value = 100 * n;
+    $("estado").value = "normal";
+  }
+
+  function cargarPruebaViento() {
+
+    const datos = [10, 20, 30, 40, 50];
+
+    document.querySelectorAll(".viento-input")
+      .forEach(function (campo, i) {
+        campo.value = datos[i];
+      });
+  }
+
+  function cargarPruebaSensores() {
+    $("codigo").value = "SEN-001";
+    $("tipo").value = "Viento";
+    $("lectura").value = "25.5";
+  }
+
+
+  // =====================================
+  // EVENTOS DE LOS CUATRO MÓDULOS
+  // =====================================
+
+  $("form-detencion").addEventListener("submit", calcularDetencion);
+
+  $("form-mantenimiento").addEventListener("submit", agregarComponente);
+
+  $("tabla-mantenimiento").addEventListener("click", eliminarComponente);
+
+  $("form-viento").addEventListener("submit", analizarViento);
+
+  $("form-sensores").addEventListener("submit", registrarSensor);
+
+  $("tabla-sensores").addEventListener("click", eliminarSensor);
+
+  $("prueba-detencion").addEventListener("click", cargarPruebaDetencion);
+
+  $("prueba-mantenimiento").addEventListener("click", cargarPruebaMantenimiento);
+
+  $("prueba-viento").addEventListener("click", cargarPruebaViento);
+
+  $("prueba-sensores").addEventListener("click", cargarPruebaSensores);
+
+  dibujarMantenimiento();
+  dibujarSensores();
+
+
+  // =====================================
+  // 5. REGISTRO Y AUTENTICACIÓN
+  // =====================================
+
+  const login = $("pantalla-login");
+  const panel = $("panel-principal");
+
+  const formularioLogin = $("form-login");
+  const formularioRegistro = $("form-registro");
+  const formularioRecuperacion = $("form-recuperacion");
+  const formularioNuevaClave = $("form-nueva-clave");
+
+  const registroCaja = $("registro-caja");
+  const recuperacion = $("recuperacion");
+
+  const btnMostrarRegistro = $("btn-mostrar-registro");
+  const btnVolverLogin = $("btn-volver-login");
+  const btnCerrar = $("btn-cerrar-sesion");
+
+  const mensajeLogin = $("login-mensaje");
+  const mensajeRegistro = $("registro-mensaje");
+  const mensajeRecuperacion = $("recuperacion-mensaje");
+
+  const intentosTexto = $("login-intentos");
+
+  if (
+    !login || !panel ||
+    !formularioLogin ||
+    !formularioRegistro ||
+    !formularioRecuperacion ||
+    !formularioNuevaClave
+  ) {
+    console.error("Faltan elementos HTML del sistema de autenticación.");
+    return;
+  }
+
+
+  // BASE DE DATOS LOCAL DE USUARIOS
+
+  const CLAVE_STORAGE = "simtele-usuarios";
+
+  function obtenerUsuarios() {
+
+    try {
+      const datos = JSON.parse(localStorage.getItem(CLAVE_STORAGE));
+
+      return Array.isArray(datos) ? datos : [];
+
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function guardarUsuarios() {
+    localStorage.setItem(CLAVE_STORAGE, JSON.stringify(usuarios));
+  }
+
+  let usuarios = obtenerUsuarios();
+
+  let intentos = 0;
+  const maxIntentos = 4;
+
+  let cuentaRecuperacion = null;
+
+
+  // BUSCAR USUARIO O CORREO
+
+  function buscarCuenta(identidad) {
+
+    const dato = identidad.trim().toLowerCase();
+
+    return usuarios.find(function (cuenta) {
+
+      return cuenta.usuario.toLowerCase() === dato ||
+             cuenta.correo.toLowerCase() === dato;
+
+    });
+  }
+
+
+  // =====================================
+  // 6. MOSTRAR REGISTRO
+  // =====================================
+
+  if (btnMostrarRegistro) {
 
     btnMostrarRegistro.addEventListener("click", function () {
 
-        registroCaja.hidden = false;
-        mensaje(mensajeRegistro, "");
+      registroCaja.hidden = false;
 
-        document.getElementById("btn-mostrar-registro").hidden = true;
+      mensaje(mensajeRegistro, "");
 
-        document.getElementById("registro-usuario").focus();
+      btnMostrarRegistro.hidden = true;
+
+      $("registro-usuario").focus();
 
     });
+  }
+
+  if (btnVolverLogin) {
 
     btnVolverLogin.addEventListener("click", function () {
 
-        registroCaja.hidden = true;
-        btnMostrarRegistro.hidden = false;
+      registroCaja.hidden = true;
 
-        formularioRegistro.reset();
-        mensaje(mensajeRegistro, "");
+      btnMostrarRegistro.hidden = false;
+
+      formularioRegistro.reset();
+
+      mensaje(mensajeRegistro, "");
+
+    });
+  }
+
+
+  // FUNCIÓN AUXILIAR PARA MENSAJES DE AUTENTICACIÓN
+
+  function mensaje(elemento, texto) {
+    if (elemento) {
+      elemento.textContent = texto;
+    }
+  }
+
+
+  // =====================================
+  // 7. CREAR NUEVA CUENTA
+  // =====================================
+
+  formularioRegistro.addEventListener("submit", function (evento) {
+
+    evento.preventDefault();
+
+    const usuario = $("registro-usuario").value.trim();
+
+    const correo = $("registro-correo").value.trim().toLowerCase();
+
+    const clave = $("registro-clave").value;
+
+    const confirmar = $("registro-confirmar").value;
+
+
+    if (!usuario || !correo || !clave || !confirmar) {
+
+      mensaje(mensajeRegistro, "Completa todos los campos.");
+
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9._-]{3,20}$/.test(usuario)) {
+
+      mensaje(
+        mensajeRegistro,
+        "El usuario debe tener entre 3 y 20 caracteres."
+      );
+
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+
+      mensaje(mensajeRegistro, "Introduce un correo electrónico válido.");
+
+      return;
+    }
+
+    if (clave.length < 8) {
+
+      mensaje(
+        mensajeRegistro,
+        "La contraseña debe tener al menos 8 caracteres."
+      );
+
+      return;
+    }
+
+    if (clave !== confirmar) {
+
+      mensaje(mensajeRegistro, "Las contraseñas no coinciden.");
+
+      return;
+    }
+
+
+    // COMPROBAR USUARIO Y CORREO DUPLICADOS
+
+    const repetido = usuarios.some(function (cuenta) {
+
+      return cuenta.usuario.toLowerCase() === usuario.toLowerCase() ||
+             cuenta.correo.toLowerCase() === correo;
 
     });
 
-    // =====================================
-    // 2. REGISTRAR NUEVO USUARIO
-    // =====================================
+    if (repetido) {
 
-    formularioRegistro.addEventListener("submit", function (evento) {
+      mensaje(
+        mensajeRegistro,
+        "Ese usuario o correo ya está registrado."
+      );
 
-        evento.preventDefault();
+      return;
+    }
 
-        const usuario = document.getElementById("registro-usuario").value.trim();
-        const correo = document.getElementById("registro-correo").value.trim().toLowerCase();
-        const clave = document.getElementById("registro-clave").value;
-        const confirmar = document.getElementById("registro-confirmar").value;
 
-        // VALIDACIONES
+    // GUARDAR NUEVA CUENTA
 
-        if (!usuario || !correo || !clave || !confirmar) {
-            mensaje(mensajeRegistro, "Completa todos los campos.");
-            return;
-        }
+    usuarios.push({
+      usuario: usuario,
+      correo: correo,
+      clave: clave
+    });
 
-        if (!/^[a-zA-Z0-9._-]{3,20}$/.test(usuario)) {
-            mensaje(mensajeRegistro, "El usuario debe tener entre 3 y 20 caracteres. Usa letras, números, puntos, guiones o guion bajo.");
-            return;
-        }
+    try {
 
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-            mensaje(mensajeRegistro, "Introduce un correo electrónico válido.");
-            return;
-        }
+      guardarUsuarios();
 
-        if (clave.length < 8) {
-            mensaje(mensajeRegistro, "La contraseña debe tener al menos 8 caracteres.");
-            return;
-        }
+    } catch (error) {
 
-        if (clave !== confirmar) {
-            mensaje(mensajeRegistro, "Las contraseñas no coinciden.");
-            return;
-        }
+      usuarios.pop();
 
-        // VERIFICAR SI YA EXISTE EL USUARIO O CORREO
+      mensaje(
+        mensajeRegistro,
+        "No se pudo guardar la cuenta en este navegador."
+      );
 
-        const repetido = usuarios.some(function (cuenta) {
+      return;
+    }
 
-            return cuenta.usuario.toLowerCase() === usuario.toLowerCase() ||
-                   cuenta.correo.toLowerCase() === correo;
 
-        });
+    // REGISTRO COMPLETADO
 
-        if (repetido) {
-            mensaje(mensajeRegistro, "Ese usuario o correo ya está registrado.");
-            return;
-        }
+    formularioRegistro.reset();
 
-        // CREAR CUENTA
+    registroCaja.hidden = true;
 
-        usuarios.push({
-            usuario: usuario,
-            correo: correo,
-            clave: clave
-        });
+    btnMostrarRegistro.hidden = false;
 
-        try {
-            guardarUsuarios(usuarios);
-        } catch (error) {
-            usuarios.pop();
-            mensaje(mensajeRegistro, "No se pudo guardar la cuenta en este navegador.");
-            return;
-        }
+    $("login-identidad").value = usuario;
 
-        // REGISTRO COMPLETADO
+    mensaje(
+      mensajeLogin,
+      "¡Cuenta creada correctamente! Ahora puedes iniciar sesión."
+    );
 
-        formularioRegistro.reset();
-        registroCaja.hidden = true;
-        btnMostrarRegistro.hidden = false;
+    mensaje(mensajeRegistro, "");
 
-        document.getElementById("login-identidad").value = usuario;
+    window.scrollTo(0, 0);
+
+  });
+
+
+  // =====================================
+  // 8. INICIAR SESIÓN
+  // =====================================
+
+  formularioLogin.addEventListener("submit", function (evento) {
+
+    evento.preventDefault();
+
+    if (intentos >= maxIntentos) {
+      return;
+    }
+
+    const identidad = $("login-identidad").value.trim();
+
+    const clave = $("login-clave").value;
+
+    if (!identidad || !clave) {
+
+      mensaje(
+        mensajeLogin,
+        "Completa el usuario y la contraseña."
+      );
+
+      return;
+    }
+
+    const cuenta = buscarCuenta(identidad);
+
+
+    if (cuenta && cuenta.clave === clave) {
+
+      mensaje(mensajeLogin, "Acceso correcto.");
+
+      intentos = 0;
+
+      login.hidden = true;
+
+      panel.hidden = false;
+
+      formularioLogin.reset();
+
+      window.scrollTo(0, 0);
+
+    } else {
+
+      intentos++;
+
+      const restantes = maxIntentos - intentos;
+
+      if (restantes > 0) {
 
         mensaje(
-            mensajeLogin,
-            "¡Cuenta creada correctamente! Ahora puedes iniciar sesión."
+          mensajeLogin,
+          "Credenciales incorrectas. Intentos restantes: " + restantes
         );
 
-        mensaje(mensajeRegistro, "");
+        intentosTexto.textContent =
+          "Intentos disponibles: " + restantes;
 
-        window.scrollTo(0, 0);
+      } else {
 
-    });
+        mensaje(
+          mensajeLogin,
+          "Has alcanzado los cuatro intentos. Recupera tu cuenta."
+        );
 
-    // =====================================
-    // 3. INICIAR SESIÓN
-    // =====================================
+        intentosTexto.textContent =
+          "Máximo de intentos alcanzado.";
 
-    formularioLogin.addEventListener("submit", function (evento) {
-
-        evento.preventDefault();
-
-        if (intentos >= maxIntentos) {
-            return;
-        }
-
-        const identidad = document.getElementById("login-identidad").value.trim();
-        const clave = document.getElementById("login-clave").value;
-
-        if (!identidad || !clave) {
-            mensaje(mensajeLogin, "Completa el usuario y la contraseña.");
-            return;
-        }
-
-        const cuenta = buscarCuenta(identidad);
-
-        if (cuenta && cuenta.clave === clave) {
-
-            mensaje(mensajeLogin, "Acceso correcto.");
-
-            intentos = 0;
-
-            login.hidden = true;
-            panel.hidden = false;
-
-            formularioLogin.reset();
-
-            window.scrollTo(0, 0);
-
-        } else {
-
-            intentos++;
-
-            const restantes = maxIntentos - intentos;
-
-            if (restantes > 0) {
-
-                mensaje(
-                    mensajeLogin,
-                    "Credenciales incorrectas. Intentos restantes: " + restantes
-                );
-
-                intentosTexto.textContent =
-                    "Intentos disponibles: " + restantes;
-
-            } else {
-
-                mensaje(
-                    mensajeLogin,
-                    "Has alcanzado los cuatro intentos. Recupera tu cuenta."
-                );
-
-                intentosTexto.textContent = "Máximo de intentos alcanzado.";
-
-                formularioLogin.querySelectorAll("input, button")
-                    .forEach(function (elemento) {
-                        elemento.disabled = true;
-                    });
-
-                recuperacion.hidden = false;
-
-                document.getElementById("recuperar-identidad").focus();
-
-            }
-
-        }
-
-    });
-
-    // =====================================
-    // 4. RECUPERAR CONTRASEÑA
-    // =====================================
-
-    formularioRecuperacion.addEventListener("submit", function (evento) {
-
-        evento.preventDefault();
-
-        const identidad = document.getElementById("recuperar-identidad").value.trim();
-
-        if (!identidad) {
-            mensaje(mensajeRecuperacion, "Escribe tu usuario o correo.");
-            return;
-        }
-
-        cuentaRecuperacion = buscarCuenta(identidad);
-
-        if (cuentaRecuperacion) {
-
-            mensaje(
-                mensajeRecuperacion,
-                "Cuenta encontrada. Puedes establecer una nueva contraseña en esta demostración."
-            );
-
-            formularioNuevaClave.hidden = false;
-
-        } else {
-
-            mensaje(
-                mensajeRecuperacion,
-                "No existe una cuenta registrada con esos datos."
-            );
-
-        }
-
-    });
-
-    // =====================================
-    // 5. ESTABLECER NUEVA CONTRASEÑA
-    // =====================================
-
-    formularioNuevaClave.addEventListener("submit", function (evento) {
-
-        evento.preventDefault();
-
-        if (!cuentaRecuperacion) {
-            mensaje(mensajeRecuperacion, "Primero debes identificar tu cuenta.");
-            return;
-        }
-
-        const nueva = document.getElementById("nueva-clave").value;
-        const confirmar = document.getElementById("confirmar-clave").value;
-
-        if (nueva.length < 8) {
-            mensaje(mensajeRecuperacion, "La contraseña debe tener al menos 8 caracteres.");
-            return;
-        }
-
-        if (nueva !== confirmar) {
-            mensaje(mensajeRecuperacion, "Las contraseñas no coinciden.");
-            return;
-        }
-
-        cuentaRecuperacion.clave = nueva;
-
-        try {
-            guardarUsuarios(usuarios);
-        } catch (error) {
-            mensaje(mensajeRecuperacion, "No se pudo guardar la nueva contraseña.");
-            return;
-        }
-
-        // REINICIAR EL ACCESO
-
-        intentos = 0;
-
-        formularioLogin.reset();
-        formularioRecuperacion.reset();
-        formularioNuevaClave.reset();
-
-        formularioNuevaClave.hidden = true;
-        recuperacion.hidden = true;
+        // BLOQUEAR FORMULARIO
 
         formularioLogin.querySelectorAll("input, button")
-            .forEach(function (elemento) {
-                elemento.disabled = false;
-            });
+          .forEach(function (elemento) {
+            elemento.disabled = true;
+          });
 
-        intentosTexto.textContent = "Intentos disponibles: 4";
+        if (btnMostrarRegistro) {
+          btnMostrarRegistro.hidden = true;
+        }
 
-        mensaje(
-            mensajeLogin,
-            "Contraseña actualizada. Ya puedes iniciar sesión."
-        );
+        // MOSTRAR RECUPERACIÓN
 
-        mensaje(mensajeRecuperacion, "");
+        recuperacion.hidden = false;
 
-        document.getElementById("login-identidad").value =
-            cuentaRecuperacion.usuario;
+        $("recuperar-identidad").focus();
 
-        cuentaRecuperacion = null;
-
-    });
-
-    // =====================================
-    // 6. CERRAR SESIÓN
-    // =====================================
-
-    if (btnCerrar) {
-
-        btnCerrar.addEventListener("click", function () {
-
-            panel.hidden = true;
-            login.hidden = false;
-
-            formularioLogin.reset();
-
-            mensaje(mensajeLogin, "Sesión cerrada correctamente.");
-
-            window.scrollTo(0, 0);
-
-        });
+      }
 
     }
 
-});
+  });
 
 
-    // ==================================
-    // 1. INICIAR SESIÓN
-    // ==================================
+  // =====================================
+  // 9. RECUPERAR CONTRASEÑA
+  // =====================================
 
-    formularioLogin.addEventListener("submit", function (evento) {
+  formularioRecuperacion.addEventListener("submit", function (evento) {
 
-        evento.preventDefault();
+    evento.preventDefault();
 
-        if (intentos >= maxIntentos) {
-            return;
-        }
+    const identidad = $("recuperar-identidad").value.trim();
 
-        const identidad = document
-            .getElementById("login-identidad").value.trim();
+    if (!identidad) {
 
-        const clave = document
-            .getElementById("login-clave").value;
+      mensaje(
+        mensajeRecuperacion,
+        "Escribe tu usuario o correo electrónico."
+      );
 
-        if (identidad === "" || clave === "") {
-            mostrarMensaje(
-                mensajeLogin,
-                "Completa el usuario y la contraseña."
-            );
-            return;
-        }
+      return;
+    }
 
-        // Validar credenciales
-        if (esCuentaValida(identidad) && clave === claveActual) {
+    cuentaRecuperacion = buscarCuenta(identidad);
 
-            mostrarMensaje(mensajeLogin, "Acceso correcto.");
+    if (cuentaRecuperacion) {
 
-            login.hidden = true;
-            panel.hidden = false;
+      mensaje(
+        mensajeRecuperacion,
+        "Cuenta encontrada. Puedes establecer una nueva contraseña en esta demostración."
+      );
 
-            window.scrollTo(0, 0);
+      formularioNuevaClave.hidden = false;
 
-            intentos = 0;
+    } else {
 
-        } else {
-
-            intentos++;
-
-            const restantes = maxIntentos - intentos;
-
-            if (restantes > 0) {
-
-                mostrarMensaje(
-                    mensajeLogin,
-                    "Credenciales incorrectas. Intentos restantes: " + restantes
-                );
-
-                intentosTexto.textContent =
-                    "Intentos disponibles: " + restantes;
-
-            } else {
-
-                mostrarMensaje(
-                    mensajeLogin,
-                    "Has alcanzado los 4 intentos. Acceso bloqueado."
-                );
-
-                intentosTexto.textContent = "Máximo de intentos alcanzado.";
-
-                // Desactivar formulario de acceso
-                formularioLogin.querySelectorAll("input, button")
-                    .forEach(function (elemento) {
-                        elemento.disabled = true;
-                    });
-
-                // Mostrar recuperación
-                recuperacion.hidden = false;
-
-                document.getElementById("recuperar-identidad").focus();
-
-            }
-
-        }
-
-    });
-
-
-    // ==================================
-    // 2. RECUPERAR CUENTA
-    // ==================================
-
-    formularioRecuperacion.addEventListener("submit", function (evento) {
-
-        evento.preventDefault();
-
-        const identidad = document
-            .getElementById("recuperar-identidad").value.trim();
-
-        if (identidad === "") {
-
-            mostrarMensaje(
-                mensajeRecuperacion,
-                "Escribe tu usuario o correo electrónico."
-            );
-
-            return;
-        }
-
-        if (esCuentaValida(identidad)) {
-
-            mostrarMensaje(
-                mensajeRecuperacion,
-                "Cuenta identificada. Puedes establecer una nueva contraseña en esta demostración."
-            );
-
-            formularioNuevaClave.hidden = false;
-
-        } else {
-
-            mostrarMensaje(
-                mensajeRecuperacion,
-                "No se encontró una cuenta con esos datos."
-            );
-
-        }
-
-    });
-
-
-    // ==================================
-    // 3. RESTABLECER CONTRASEÑA
-    // ==================================
-
-    formularioNuevaClave.addEventListener("submit", function (evento) {
-
-        evento.preventDefault();
-
-        const nueva = document.getElementById("nueva-clave").value;
-
-        const confirmar = document.getElementById("confirmar-clave").value;
-
-        if (nueva.length < 8) {
-
-            mostrarMensaje(
-                mensajeRecuperacion,
-                "La contraseña debe tener al menos 8 caracteres."
-            );
-
-            return;
-        }
-
-        if (nueva !== confirmar) {
-
-            mostrarMensaje(
-                mensajeRecuperacion,
-                "Las contraseñas no coinciden."
-            );
-
-            return;
-        }
-
-        // Guardar nueva contraseña de demostración
-        claveActual = nueva;
-
-        try {
-            sessionStorage.setItem("simtele-demo-clave", nueva);
-        } catch (error) {
-            console.warn("No se pudo guardar la contraseña de demostración.");
-        }
-
-        // Restablecer intentos
-        intentos = 0;
-
-        formularioLogin.reset();
-
-        formularioLogin.querySelectorAll("input, button")
-            .forEach(function (elemento) {
-                elemento.disabled = false;
-            });
-
-        formularioRecuperacion.reset();
-        formularioNuevaClave.reset();
-
-        formularioNuevaClave.hidden = true;
-        recuperacion.hidden = true;
-
-        intentosTexto.textContent = "Intentos disponibles: 4";
-
-        mostrarMensaje(
-            mensajeLogin,
-            "Contraseña actualizada. Ya puedes iniciar sesión."
-        );
-
-        mostrarMensaje(mensajeRecuperacion, "");
-
-    });
-
-
-    // ==================================
-    // 4. CERRAR SESIÓN
-    // ==================================
-
-    if (botonCerrar) {
-
-        botonCerrar.addEventListener("click", function () {
-
-            panel.hidden = true;
-            login.hidden = false;
-
-            formularioLogin.reset();
-
-            mostrarMensaje(mensajeLogin, "Sesión cerrada correctamente.");
-
-            window.scrollTo(0, 0);
-
-        });
+      mensaje(
+        mensajeRecuperacion,
+        "No existe una cuenta registrada con esos datos."
+      );
 
     }
 
-})();
+  });
 
+
+  // =====================================
+  // 10. ESTABLECER NUEVA CONTRASEÑA
+  // =====================================
+
+  formularioNuevaClave.addEventListener("submit", function (evento) {
+
+    evento.preventDefault();
+
+    if (!cuentaRecuperacion) {
+
+      mensaje(
+        mensajeRecuperacion,
+        "Primero debes identificar tu cuenta."
+      );
+
+      return;
+    }
+
+    const nueva = $("nueva-clave").value;
+
+    const confirmar = $("confirmar-clave").value;
+
+    if (nueva.length < 8) {
+
+      mensaje(
+        mensajeRecuperacion,
+        "La contraseña debe tener al menos 8 caracteres."
+      );
+
+      return;
+    }
+
+    if (nueva !== confirmar) {
+
+      mensaje(
+        mensajeRecuperacion,
+        "Las contraseñas no coinciden."
+      );
+
+      return;
+    }
+
+
+    // ACTUALIZAR CONTRASEÑA
+
+    cuentaRecuperacion.clave = nueva;
+
+    try {
+
+      guardarUsuarios();
+
+    } catch (error) {
+
+      mensaje(
+        mensajeRecuperacion,
+        "No se pudo guardar la nueva contraseña."
+      );
+
+      return;
+    }
+
+
+    // RESTABLECER ACCESO
+
+    intentos = 0;
+
+    formularioLogin.reset();
+
+    formularioRecuperacion.reset();
+
+    formularioNuevaClave.reset();
+
+    formularioNuevaClave.hidden = true;
+
+    recuperacion.hidden = true;
+
+    formularioLogin.querySelectorAll("input, button")
+      .forEach(function (elemento) {
+        elemento.disabled = false;
+      });
+
+    intentosTexto.textContent = "Intentos disponibles: 4";
+
+    if (btnMostrarRegistro) {
+      btnMostrarRegistro.hidden = false;
+    }
+
+    mensaje(
+      mensajeLogin,
+      "Contraseña actualizada. Ya puedes iniciar sesión."
+    );
+
+    mensaje(mensajeRecuperacion, "");
+
+    $("login-identidad").value = cuentaRecuperacion.usuario;
+
+    cuentaRecuperacion = null;
+
+  });
+
+
+  // =====================================
+  // 11. CERRAR SESIÓN
+  // =====================================
+
+  if (btnCerrar) {
+
+    btnCerrar.addEventListener("click", function () {
+
+      panel.hidden = true;
+
+      login.hidden = false;
+
+      formularioLogin.reset();
+
+      mensaje(
+        mensajeLogin,
+        "Sesión cerrada correctamente."
+      );
+
+      window.scrollTo(0, 0);
+
+    });
+
+  }
 
 });
