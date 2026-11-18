@@ -207,46 +207,278 @@ dibujarMantenimiento();
 dibujarSensores();
 
 
-/* =====================================
-   NAVEGACIÓN SIMTELE-WEB
-===================================== */
+/* ==========================================
+   SIMTELE-WEB - AUTENTICACIÓN DE DEMOSTRACIÓN
+========================================== */
 
-document.addEventListener("DOMContentLoaded", function () {
+(function () {
 
-    const inicio = document.getElementById("inicio");
+    const login = document.getElementById("pantalla-login");
     const panel = document.getElementById("panel-principal");
 
-    // Buscar el botón específicamente dentro de la pantalla inicial
-    const entrar = document.querySelector("#inicio #btn-entrar");
+    const formularioLogin = document.getElementById("form-login");
+    const formularioRecuperacion = document.getElementById("form-recuperacion");
+    const formularioNuevaClave = document.getElementById("form-nueva-clave");
 
-    const regresar = document.getElementById("btn-inicio");
+    const recuperacion = document.getElementById("recuperacion");
 
-    // INGRESAR AL SISTEMA
-    if (entrar && panel && inicio) {
+    const mensajeLogin = document.getElementById("login-mensaje");
+    const mensajeRecuperacion = document.getElementById("recuperacion-mensaje");
 
-        entrar.addEventListener("click", function () {
+    const intentosTexto = document.getElementById("login-intentos");
 
-            inicio.hidden = true;
+    const botonCerrar = document.getElementById("btn-cerrar-sesion");
+
+    // CUENTA DE PRUEBA
+    const usuarioCorrecto = "admin";
+    const correoCorrecto = "admin@simteleweb.com";
+    const claveInicial = "Simtele2026!";
+
+    let claveActual = claveInicial;
+    let intentos = 0;
+    const maxIntentos = 4;
+
+    // Recuperar contraseña de demostración durante la sesión del navegador
+    try {
+        claveActual =
+            sessionStorage.getItem("simtele-demo-clave") || claveInicial;
+    } catch (error) {
+        console.warn("No se pudo acceder a sessionStorage.");
+    }
+
+    // Comprobar que existen los elementos
+    if (!login || !panel || !formularioLogin ||
+        !formularioRecuperacion || !formularioNuevaClave) {
+
+        console.error("Error: no se encontraron los elementos de autenticación.");
+        return;
+    }
+
+    function mostrarMensaje(elemento, texto) {
+        elemento.textContent = texto;
+    }
+
+    function esCuentaValida(identidad) {
+        const dato = identidad.trim().toLowerCase();
+
+        return dato === usuarioCorrecto ||
+               dato === correoCorrecto;
+    }
+
+    // ==================================
+    // 1. INICIAR SESIÓN
+    // ==================================
+
+    formularioLogin.addEventListener("submit", function (evento) {
+
+        evento.preventDefault();
+
+        if (intentos >= maxIntentos) {
+            return;
+        }
+
+        const identidad = document
+            .getElementById("login-identidad").value.trim();
+
+        const clave = document
+            .getElementById("login-clave").value;
+
+        if (identidad === "" || clave === "") {
+            mostrarMensaje(
+                mensajeLogin,
+                "Completa el usuario y la contraseña."
+            );
+            return;
+        }
+
+        // Validar credenciales
+        if (esCuentaValida(identidad) && clave === claveActual) {
+
+            mostrarMensaje(mensajeLogin, "Acceso correcto.");
+
+            login.hidden = true;
             panel.hidden = false;
 
             window.scrollTo(0, 0);
 
-        });
+            intentos = 0;
 
-    }
+        } else {
 
-    // REGRESAR AL INICIO
-    if (regresar && panel && inicio) {
+            intentos++;
 
-        regresar.addEventListener("click", function () {
+            const restantes = maxIntentos - intentos;
+
+            if (restantes > 0) {
+
+                mostrarMensaje(
+                    mensajeLogin,
+                    "Credenciales incorrectas. Intentos restantes: " + restantes
+                );
+
+                intentosTexto.textContent =
+                    "Intentos disponibles: " + restantes;
+
+            } else {
+
+                mostrarMensaje(
+                    mensajeLogin,
+                    "Has alcanzado los 4 intentos. Acceso bloqueado."
+                );
+
+                intentosTexto.textContent = "Máximo de intentos alcanzado.";
+
+                // Desactivar formulario de acceso
+                formularioLogin.querySelectorAll("input, button")
+                    .forEach(function (elemento) {
+                        elemento.disabled = true;
+                    });
+
+                // Mostrar recuperación
+                recuperacion.hidden = false;
+
+                document.getElementById("recuperar-identidad").focus();
+
+            }
+
+        }
+
+    });
+
+
+    // ==================================
+    // 2. RECUPERAR CUENTA
+    // ==================================
+
+    formularioRecuperacion.addEventListener("submit", function (evento) {
+
+        evento.preventDefault();
+
+        const identidad = document
+            .getElementById("recuperar-identidad").value.trim();
+
+        if (identidad === "") {
+
+            mostrarMensaje(
+                mensajeRecuperacion,
+                "Escribe tu usuario o correo electrónico."
+            );
+
+            return;
+        }
+
+        if (esCuentaValida(identidad)) {
+
+            mostrarMensaje(
+                mensajeRecuperacion,
+                "Cuenta identificada. Puedes establecer una nueva contraseña en esta demostración."
+            );
+
+            formularioNuevaClave.hidden = false;
+
+        } else {
+
+            mostrarMensaje(
+                mensajeRecuperacion,
+                "No se encontró una cuenta con esos datos."
+            );
+
+        }
+
+    });
+
+
+    // ==================================
+    // 3. RESTABLECER CONTRASEÑA
+    // ==================================
+
+    formularioNuevaClave.addEventListener("submit", function (evento) {
+
+        evento.preventDefault();
+
+        const nueva = document.getElementById("nueva-clave").value;
+
+        const confirmar = document.getElementById("confirmar-clave").value;
+
+        if (nueva.length < 8) {
+
+            mostrarMensaje(
+                mensajeRecuperacion,
+                "La contraseña debe tener al menos 8 caracteres."
+            );
+
+            return;
+        }
+
+        if (nueva !== confirmar) {
+
+            mostrarMensaje(
+                mensajeRecuperacion,
+                "Las contraseñas no coinciden."
+            );
+
+            return;
+        }
+
+        // Guardar nueva contraseña de demostración
+        claveActual = nueva;
+
+        try {
+            sessionStorage.setItem("simtele-demo-clave", nueva);
+        } catch (error) {
+            console.warn("No se pudo guardar la contraseña de demostración.");
+        }
+
+        // Restablecer intentos
+        intentos = 0;
+
+        formularioLogin.reset();
+
+        formularioLogin.querySelectorAll("input, button")
+            .forEach(function (elemento) {
+                elemento.disabled = false;
+            });
+
+        formularioRecuperacion.reset();
+        formularioNuevaClave.reset();
+
+        formularioNuevaClave.hidden = true;
+        recuperacion.hidden = true;
+
+        intentosTexto.textContent = "Intentos disponibles: 4";
+
+        mostrarMensaje(
+            mensajeLogin,
+            "Contraseña actualizada. Ya puedes iniciar sesión."
+        );
+
+        mostrarMensaje(mensajeRecuperacion, "");
+
+    });
+
+
+    // ==================================
+    // 4. CERRAR SESIÓN
+    // ==================================
+
+    if (botonCerrar) {
+
+        botonCerrar.addEventListener("click", function () {
 
             panel.hidden = true;
-            inicio.hidden = false;
+            login.hidden = false;
+
+            formularioLogin.reset();
+
+            mostrarMensaje(mensajeLogin, "Sesión cerrada correctamente.");
 
             window.scrollTo(0, 0);
 
         });
 
     }
+
+})();
+
 
 });
