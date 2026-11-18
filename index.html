@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <!-- EXPLICAR: este meta hace que la página se adapte a pantallas de celular -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIMTELE-WEB · Panel de prevención y monitoreo</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- EXPLICAR: HTML semántico = header, nav, main, section, footer -->
+  <header class="cabecera">
+    <div class="marca">
+      <span class="logo" aria-hidden="true">🚠</span>
+      <div>
+        <h1>SIMTELE-WEB</h1>
+        <p>Panel educativo de prevención y monitoreo de un sistema de transporte por cable</p>
+      </div>
+    </div>
+    <nav class="menu" aria-label="Navegación principal">
+      <a href="#detencion">1. Detención</a>
+      <a href="#mantenimiento">2. Mantenimiento</a>
+      <a href="#viento">3. Viento</a>
+      <a href="#sensores">4. Sensores</a>
+      <a href="#requisitos">Requisitos</a>
+      <a href="#pruebas">Pruebas</a>
+    </nav>
+  </header>
+
+  <main>
+    <p class="aviso-general">
+      ⚠️ Todos los umbrales de esta página son <strong>didácticos (simulaciones)</strong>,
+      nunca límites operativos reales de Mi Teleférico.
+    </p>
+
+    <!-- ============ MÓDULO 1 ============ -->
+    <section id="detencion" class="tarjeta">
+      <h2><span class="num">1</span> Detención de emergencia</h2>
+      <p class="ayuda">Fórmula: d = (v / 3.6) × t. Umbral ficticio: si d ≥ <strong>50 m</strong> se muestra una alerta.</p>
+      <form id="form-detencion" novalidate>
+        <div class="campo">
+          <label for="velocidad">Velocidad (km/h)</label>
+          <input type="text" id="velocidad" placeholder="Ej.: 72">
+          <small>Rango permitido: 1 a 100.</small>
+        </div>
+        <div class="campo">
+          <label for="reaccion">Tiempo de reacción (s)</label>
+          <input type="text" id="reaccion" placeholder="Ej.: 3">
+          <small>Rango permitido: 0.1 a 20.</small>
+        </div>
+        <div class="botones">
+          <button type="submit">Calcular distancia</button>
+          <button type="button" class="secundario" id="prueba-detencion">Cargar datos de prueba</button>
+        </div>
+      </form>
+      <p id="msg-detencion" class="mensaje" role="status"></p>
+    </section>
+
+    <!-- ============ MÓDULO 2 ============ -->
+    <section id="mantenimiento" class="tarjeta">
+      <h2><span class="num">2</span> Mantenimiento</h2>
+      <p class="ayuda">Agrega componentes con sus horas de uso y estado. Puedes eliminar cualquier registro.</p>
+      <form id="form-mantenimiento" novalidate>
+        <div class="campo">
+          <label for="componente">Componente</label>
+          <input type="text" id="componente" placeholder="Ej.: Cable principal">
+        </div>
+        <div class="campo">
+          <label for="horas">Horas de uso</label>
+          <input type="text" id="horas" placeholder="Ej.: 1200">
+          <small>Número mayor o igual a 0.</small>
+        </div>
+        <div class="campo">
+          <label for="estado">Estado</label>
+          <select id="estado">
+            <option value="normal">Normal</option>
+            <option value="revisión">Revisión</option>
+            <option value="urgente">Urgente</option>
+          </select>
+        </div>
+        <div class="botones">
+          <button type="submit">Agregar registro</button>
+          <button type="button" class="secundario" id="prueba-mantenimiento">Cargar datos de prueba</button>
+        </div>
+      </form>
+      <p id="msg-mantenimiento" class="mensaje" role="status"></p>
+      <div class="tabla-caja">
+        <table>
+          <thead><tr><th>Componente</th><th>Horas</th><th>Estado</th><th>Acción</th></tr></thead>
+          <tbody id="tabla-mantenimiento"></tbody>
+        </table>
+      </div>
+      <p class="contador">Filas en la tabla: <strong id="cuenta-mantenimiento">0</strong></p>
+    </section>
+
+    <!-- ============ MÓDULO 3 ============ -->
+    <section id="viento" class="tarjeta">
+      <h2><span class="num">3</span> Viento y oscilación</h2>
+      <p class="ayuda">Ingresa 5 mediciones simuladas (km/h). Clasificación didáctica: &lt; 20 calma · 20 a 39 moderado · ≥ 40 fuerte.</p>
+      <form id="form-viento" novalidate>
+        <div class="fila-viento">
+          <input type="text" class="viento-input" aria-label="Medición 1" placeholder="M1">
+          <input type="text" class="viento-input" aria-label="Medición 2" placeholder="M2">
+          <input type="text" class="viento-input" aria-label="Medición 3" placeholder="M3">
+          <input type="text" class="viento-input" aria-label="Medición 4" placeholder="M4">
+          <input type="text" class="viento-input" aria-label="Medición 5" placeholder="M5">
+        </div>
+        <div class="botones">
+          <button type="submit">Analizar viento</button>
+          <button type="button" class="secundario" id="prueba-viento">Cargar datos de prueba</button>
+        </div>
+      </form>
+      <p id="msg-viento" class="mensaje" role="status"></p>
+    </section>
+
+    <!-- ============ MÓDULO 4 ============ -->
+    <section id="sensores" class="tarjeta">
+      <h2><span class="num">4</span> Sensores</h2>
+      <p class="ayuda">El código debe tener el formato <strong>SEN-001</strong> (SEN, guion y 3 dígitos).</p>
+      <form id="form-sensores" novalidate>
+        <div class="campo">
+          <label for="codigo">Código del sensor</label>
+          <input type="text" id="codigo" placeholder="Ej.: SEN-001">
+        </div>
+        <div class="campo">
+          <label for="tipo">Tipo</label>
+          <select id="tipo">
+            <option value="Viento">Viento</option>
+            <option value="Temperatura">Temperatura</option>
+            <option value="Vibración">Vibración</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="lectura">Lectura</label>
+          <input type="text" id="lectura" placeholder="Ej.: 25.5">
+          <small>Debe ser un número.</small>
+        </div>
+        <div class="botones">
+          <button type="submit">Registrar sensor</button>
+          <button type="button" class="secundario" id="prueba-sensores">Cargar datos de prueba</button>
+        </div>
+      </form>
+      <p id="msg-sensores" class="mensaje" role="status"></p>
+      <div class="tabla-caja">
+        <table>
+          <thead><tr><th>Código</th><th>Tipo</th><th>Lectura</th><th>Acción</th></tr></thead>
+          <tbody id="tabla-sensores"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ REQUISITOS TÉCNICOS ============ -->
+    <section id="requisitos" class="tarjeta">
+      <h2>Requisitos técnicos mínimos</h2>
+      <ul class="lista-check">
+        <li>HTML semántico: header, nav, main, section, footer; formularios con label y ayudas.</li>
+        <li>CSS propio con colores coherentes, tablas, botones y media query para celular.</li>
+        <li>JavaScript externo (script.js) con más de 4 funciones y addEventListener.</li>
+        <li>Actualización del DOM sin recargar la página.</li>
+        <li>Arreglos: mantenimiento (objetos), sensores (objetos) y viento (números).</li>
+        <li>Altas, visualización y eliminación de registros.</li>
+        <li>Expresión regular real: <code>/^SEN-\d{3}$/</code>.</li>
+        <li>Validación de rangos, vacíos y valores no numéricos, con mensajes claros.</li>
+        <li>Opcional: localStorage para conservar registros al recargar.</li>
+      </ul>
+    </section>
+
+    <!-- ============ PRUEBAS DE ACEPTACIÓN ============ -->
+    <section id="pruebas" class="tarjeta">
+      <h2>Pruebas mínimas de aceptación</h2>
+      <p class="ayuda">Usa el botón "Cargar datos de prueba" de cada módulo y presiona el botón principal.</p>
+      <div class="tabla-caja">
+        <table>
+          <thead><tr><th>Módulo</th><th>Entrada</th><th>Resultado esperado</th></tr></thead>
+          <tbody>
+            <tr><td>Detención</td><td>72 km/h y 3 s</td><td>60 m</td></tr>
+            <tr><td>Mantenimiento</td><td>Agregar 2 componentes y eliminar 1</td><td>2 filas, luego 1 fila</td></tr>
+            <tr><td>Viento</td><td>10, 20, 30, 40, 50</td><td>Promedio 30, máximo 50</td></tr>
+            <tr><td>Sensores</td><td>SEN-001 / SEN-1 / vacío</td><td>Válido / error / error</td></tr>
+            <tr><td>Navegación</td><td>Menú y controles en celular</td><td>Todo funciona</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p>SIMTELE-WEB · Programación Web I · Proyecto educativo (datos simulados)</p>
+  </footer>
+
+  <!-- EXPLICAR: el script va al final para que el HTML ya exista cuando JS lo busque -->
+  <script src="script.js"></script>
+</body>
+</html>
