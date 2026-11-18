@@ -11,7 +11,7 @@ Panel interactivo educativo de prevención y monitoreo de un sistema de transpor
 ## Enlaces
 
 - Página publicada: _(https://herikutsuboy.github.io/proyecto_final_by_ivan_yujra/)_
-- Repositorio: _(pega aquí la URL del repositorio)_
+- Repositorio: _(https://github.com/HerikutsuBoy/proyecto_final_by_ivan_yujra/tree/main)_
 
 ## Archivos
 
