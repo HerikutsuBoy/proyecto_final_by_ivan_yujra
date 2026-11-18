@@ -10,6 +10,7 @@
 <body>
 
   <!-- EXPLICAR: HTML semántico = header, nav, main, section, footer -->
+  <div id="panel-principal" hidden>
   <header class="cabecera">
     <div class="marca">
       <span class="logo" aria-hidden="true">🚠</span>
@@ -19,11 +20,15 @@
       </div>
     </div>
     <nav class="menu" aria-label="Navegación principal">
-      <a href="#detencion">1. Detención</a>
-      <a href="#mantenimiento">2. Mantenimiento</a>
-      <a href="#viento">3. Viento</a>
-      <a href="#sensores">4. Sensores</a>
-    </nav>
+  <button type="button" id="btn-inicio" class="btn-menu-inicio">
+    Inicio
+  </button>
+
+  <a href="#detencion">1. Detención</a>
+  <a href="#mantenimiento">2. Mantenimiento</a>
+  <a href="#viento">3. Viento</a>
+  <a href="#sensores">4. Sensores</a>
+</nav>
   </header>
 
   <main>
@@ -152,8 +157,82 @@
   <footer class="pie">
     <p>SIMTELE-WEB · Programación Web I · Proyecto educativo (datos simulados)</p>
   </footer>
+    </div>
 
   <!-- EXPLICAR: el script va al final para que el HTML ya exista cuando JS lo busque -->
   <script src="js/script.js"></script>
 </body>
+  <!-- ============ PANTALLA DE INICIO ============ -->
+<section id="inicio" class="inicio">
+  <div class="inicio-contenido">
+
+    <div class="inicio-texto">
+      <p class="inicio-etiqueta">
+        <span class="punto-verde"></span>
+        PLATAFORMA EDUCATIVA DE MONITOREO
+      </p>
+
+      <h1>SIMTELE<span>-WEB</span></h1>
+
+      <h2>
+        Prevención y monitoreo de un sistema de transporte por cable.
+      </h2>
+
+      <p class="descripcion-inicio">
+        Una plataforma diseñada para simular la supervisión,
+        prevención y mantenimiento de los principales componentes
+        de un sistema de transporte por cable.
+      </p>
+
+      <button type="button" id="btn-entrar" class="btn-entrar">
+        Ingresar al sistema
+        <span>→</span>
+      </button>
+
+      <p class="nota-inicio">
+        Proyecto académico · Programación Web I · Datos simulados
+      </p>
+    </div>
+
+    <div class="inicio-visual">
+      <div class="linea-cable"></div>
+
+      <div class="cabina-inicio">🚠</div>
+
+      <div class="visual-titulo">
+        <span class="punto-verde"></span>
+        SISTEMA DE MONITOREO
+      </div>
+
+      <div class="visual-modulos">
+        <div class="visual-dato">
+          <span>01</span>
+          <p>Detención de emergencia</p>
+        </div>
+
+        <div class="visual-dato">
+          <span>02</span>
+          <p>Mantenimiento</p>
+        </div>
+
+        <div class="visual-dato">
+          <span>03</span>
+          <p>Viento y oscilación</p>
+        </div>
+
+        <div class="visual-dato">
+          <span>04</span>
+          <p>Sensores</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="inicio-pie">
+    SIMTELE-WEB © 2026
+    <span>·</span>
+    Sistema educativo de simulación
+  </div>
+</section>
 </html>
