@@ -6,11 +6,11 @@ Panel interactivo educativo de prevención y monitoreo de un sistema de transpor
 
 ## Integrantes
 
-- Ivan — (apellido y código de estudiante)
+- Ivan Yujra
 
 ## Enlaces
 
-- Página publicada: _(pega aquí la URL de GitHub Pages)_
+- Página publicada: _(https://herikutsuboy.github.io/proyecto_final_by_ivan_yujra/)_
 - Repositorio: _(pega aquí la URL del repositorio)_
 
 ## Archivos
